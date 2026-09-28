@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="BASA: Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation." />
+  <meta name="theme-color" content="#0b1020" />
+  <title>BASA — Backend-Agnostic Sparse Attention</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-nav" id="top">
+    <div class="nav-inner">
+      <a class="brand" href="#top" aria-label="BASA home">
+        <span class="brand-mark">B</span><span>BASA</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#citation">Citation</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero section-pad">
+      <div class="hero-glow hero-glow-a"></div>
+      <div class="hero-glow hero-glow-b"></div>
+      <div class="container hero-inner">
+        <div class="venue-pill">Under review at ICLR 2027</div>
+        <h1>Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation</h1>
+        <p class="hero-kicker">
+          <strong>BASA</strong> keeps sparse attention regular enough for standard backends while restoring
+          cross-window and long-range communication for high-resolution image and video generation.
+        </p>
+        <p class="authors">Anonymous Authors</p>
+
+        <div class="hero-actions" aria-label="Project links">
+          <a class="btn btn-primary" href="assets/BASA_paper.pdf" target="_blank" rel="noopener">
+            <span class="btn-icon" aria-hidden="true">▤</span> Paper
+          </a>
+          <span class="btn btn-muted is-disabled" aria-disabled="true" title="Add the repository URL after release">
+            <span class="btn-icon" aria-hidden="true">⌘</span> Code <small>soon</small>
+          </span>
+          <span class="btn btn-muted is-disabled" aria-disabled="true" title="Add the arXiv URL after release">
+            <span class="btn-icon" aria-hidden="true">↗</span> arXiv <small>soon</small>
+          </span>
+          <button class="btn btn-ghost" type="button" data-copy-bibtex>
+            <span class="btn-icon" aria-hidden="true">{ }</span> BibTeX
+          </button>
+        </div>
+
+        <figure class="teaser-card reveal">
+          <img src="assets/images/teaser.jpg" alt="Ultra-resolution image and video results generated with BASA using FLUX.1-dev and Wan2.1-1.3B." />
+          <figcaption>
+            Ultra-resolution results with FLUX.1-dev and Wan2.1-1.3B. The labels in the montage indicate output resolution.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section section-pad" id="abstract">
+      <div class="container">
+        <div class="eyebrow">Overview</div>
+        <h2>High-resolution sparsity that translates into wall-clock speed</h2>
+        <div class="abstract-grid">
+          <div class="prose-card reveal">
+            <p>
+              Diffusion Transformers become increasingly expensive as visual token sequences grow. Regular
+              partitioned windows are efficient on existing attention backends, but isolated boundaries can create
+              visible grid-like artifacts. Fine-grained sliding windows restore local continuity, yet their irregular
+              access patterns can leave a large gap between theoretical FLOP reductions and measured speedups.
+            </p>
+            <p>
+              BASA combines <strong>shifted local-window attention</strong>, <strong>K/V-pooled global memory</strong>,
+              and, for video, <strong>content-adaptive true-window routing</strong>. The sparse student is adapted from
+              the original dense model with a frozen teacher, while inference uses only the sparse model.
+            </p>
+            <div class="inline-callout">
+              <span class="callout-dot"></span>
+              The core sparse computation remains regular SDPA-style attention — no customized sparse kernel is required.
+            </div>
+          </div>
+
+          <div class="metric-grid reveal" aria-label="Key paper results">
+            <article class="metric-card">
+              <div class="metric-value">4.52×</div>
+              <div class="metric-label">Wan attention speedup</div>
+              <div class="metric-note">w=(10,10), p=(4,4)</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-value">90.1%</div>
+              <div class="metric-label">FLUX realized / theoretical</div>
+              <div class="metric-note">w=32, p=4</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-value">8.871 ms</div>
+              <div class="metric-label">FLUX weighted MSA latency</div>
+              <div class="metric-note">attention per layer</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-value">90%</div>
+              <div class="metric-label">Video attention sparsity</div>
+              <div class="metric-note">fast BASA setting</div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint section-pad" id="motivation">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Motivation</div>
+            <h2>Regular windows are fast. Irregular windows are expressive. BASA targets both.</h2>
+          </div>
+          <p>
+            The design goal is to preserve efficient, backend-friendly execution while enabling information to cross
+            partition boundaries and reach long-range context.
+          </p>
+        </div>
+        <figure class="paper-figure reveal">
+          <img src="assets/images/motivation.png" alt="Paper motivation figure comparing Swin, CLEAR, BASA, and the latency/FLOPs trade-off." />
+          <figcaption>Motivation figure from the paper: visual continuity and practical efficiency should improve together.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section section-pad" id="method">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Method</div>
+            <h2>A drop-in sparse attention processor for image and video DiTs</h2>
+          </div>
+          <p>
+            BASA replaces only visual self-attention. The pre-trained Q/K/V projections, cross-attention, MLPs,
+            and the surrounding generation pipeline remain unchanged.
+          </p>
+        </div>
+
+        <figure class="paper-figure method-figure reveal">
+          <img src="assets/images/method_overview.png" alt="Overview of the BASA pipeline and four method components." />
+          <figcaption>Overview of BASA and its integration into a DiT backbone.</figcaption>
+        </figure>
+
+        <div class="method-grid">
+          <article class="method-card reveal">
+            <span class="step-index">01</span>
+            <h3>Shifted Window Sparse Attention</h3>
+            <p>
+              Local windows stay non-overlapping and regular, while their spatial offsets vary across layers and
+              denoising steps. Tokens separated by one partition can meet under later partitions.
+            </p>
+          </article>
+          <article class="method-card reveal">
+            <span class="step-index">02</span>
+            <h3>K/V-Pooled Global Memory</h3>
+            <p>
+              Spatially pooled keys and values give every local query window a compressed view of the full latent.
+              For video, pooling is spatial only, retaining temporally resolved context.
+            </p>
+          </article>
+          <article class="method-card reveal">
+            <span class="step-index">03</span>
+            <h3>True-Window Routing</h3>
+            <p>
+              Video queries retrieve a small number of relevant uncompressed spatial windows. Routed regions keep
+              their full temporal extent, restoring selected long-range detail without dense attention.
+            </p>
+          </article>
+          <article class="method-card reveal">
+            <span class="step-index">04</span>
+            <h3>Dense-Teacher Sparse Adaptation</h3>
+            <p>
+              A frozen dense teacher supervises the sparse student through flow matching, prediction matching, and
+              intermediate attention-output alignment. The teacher is removed after adaptation.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-dark section-pad" id="results">
+      <div class="container">
+        <div class="section-heading on-dark">
+          <div>
+            <div class="eyebrow">Results</div>
+            <h2>Practical acceleration on FLUX and Wan</h2>
+          </div>
+          <p>
+            All reported timings below are attention-only measurements after warm-up under the paper's matched
+            evaluation setup.
+          </p>
+        </div>
+
+        <div class="result-tabs" role="tablist" aria-label="Results by modality">
+          <button class="result-tab is-active" role="tab" aria-selected="true" aria-controls="panel-image" data-result-tab="image">Image · FLUX.1-dev</button>
+          <button class="result-tab" role="tab" aria-selected="false" aria-controls="panel-video" data-result-tab="video">Video · Wan2.1-1.3B</button>
+        </div>
+
+        <div class="result-panel is-active" id="panel-image" role="tabpanel" data-result-panel="image">
+          <div class="result-summary-grid">
+            <div class="result-stat"><strong>2.443×</strong><span>measured speedup</span></div>
+            <div class="result-stat"><strong>97.60</strong><span>CLIP-I similarity</span></div>
+            <div class="result-stat"><strong>95.95</strong><span>DINO similarity</span></div>
+            <div class="result-stat"><strong>0.901</strong><span>realized / theoretical</span></div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-head">
+              <h3>FLUX weighted-MSA efficiency</h3>
+              <span>1024² → 2048²</span>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Method</th><th>Backend</th><th>Latency ↓</th><th>Speedup ↑</th><th>Real./Theo. ↑</th></tr></thead>
+                <tbody>
+                  <tr><td>FLUX Dense</td><td>SDPA</td><td>21.666 ms</td><td>1.000×</td><td>1.000</td></tr>
+                  <tr><td>Swin w=32</td><td>SDPA</td><td>8.819 ms</td><td>2.455×</td><td>0.770</td></tr>
+                  <tr><td>CLEAR r=16</td><td>FlexAttn</td><td>13.106 ms</td><td>1.629×</td><td>0.504</td></tr>
+                  <tr><td>STA w=32</td><td>Triton</td><td>12.955 ms</td><td>1.648×</td><td>0.533</td></tr>
+                  <tr class="row-highlight"><td>BASA w=32, p=4</td><td>SDPA</td><td>8.871 ms</td><td>2.443×</td><td><strong>0.901</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <figure class="paper-figure dark-figure reveal">
+            <img src="assets/images/image_comparison.png" alt="Qualitative comparison of FLUX, Swin, CLEAR, STA, BASA ablations, and BASA." />
+            <figcaption>Image extrapolation comparison from 1024×1024 to 2048×2048.</figcaption>
+          </figure>
+        </div>
+
+        <div class="result-panel" id="panel-video" role="tabpanel" data-result-panel="video" hidden>
+          <div class="result-summary-grid">
+            <div class="result-stat"><strong>4.52×</strong><span>attention speedup</span></div>
+            <div class="result-stat"><strong>112.84 ms</strong><span>attention latency</span></div>
+            <div class="result-stat"><strong>90.00%</strong><span>attention sparsity</span></div>
+            <div class="result-stat"><strong>99.17%</strong><span>motion smoothness</span></div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-head">
+              <h3>Wan attention efficiency</h3>
+              <span>832×480 → 1664×960</span>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Method</th><th>Backend</th><th>Sparsity</th><th>Latency ↓</th><th>Speedup ↑</th></tr></thead>
+                <tbody>
+                  <tr><td>Wan Dense</td><td>SDPA</td><td>0.00%</td><td>509.66 ms</td><td>1.00×</td></tr>
+                  <tr><td>CLEAR w=16</td><td>Flex</td><td>89.46%</td><td>485.79 ms</td><td>1.05×</td></tr>
+                  <tr><td>Swin w=16</td><td>Flex</td><td>96.25%</td><td>396.60 ms</td><td>1.29×</td></tr>
+                  <tr><td>STA</td><td>Triton</td><td>81.25%</td><td>175.09 ms</td><td>2.85×</td></tr>
+                  <tr><td>BASA w=(15,26), p=(4,4)</td><td>SDPA</td><td>81.25%</td><td>126.07 ms</td><td>4.04×</td></tr>
+                  <tr class="row-highlight"><td>BASA w=(10,10), p=(4,4)</td><td>SDPA</td><td><strong>90.00%</strong></td><td><strong>112.84 ms</strong></td><td><strong>4.52×</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="video-strip-grid">
+            <figure class="video-strip reveal"><img src="assets/images/german-shepherd-strip.jpg" alt="Four sampled frames of a German shepherd running across a field." /><figcaption>German shepherd · sampled frames</figcaption></figure>
+            <figure class="video-strip reveal"><img src="assets/images/storm-ship-strip.jpg" alt="Four sampled frames of a ship in a stormy sea." /><figcaption>Storm ship · sampled frames</figcaption></figure>
+            <figure class="video-strip reveal"><img src="assets/images/armored-wolf-strip.jpg" alt="Four sampled frames of an armored wolf in a forest." /><figcaption>Armored wolf · sampled frames</figcaption></figure>
+            <figure class="video-strip reveal"><img src="assets/images/cherry-blossom-strip.jpg" alt="Four sampled frames of cherry blossoms over a river." /><figcaption>Cherry blossoms · sampled frames</figcaption></figure>
+            <figure class="video-strip reveal"><img src="assets/images/hummingbird-video-strip.jpg" alt="Four sampled frames of a hummingbird near a flower." /><figcaption>Hummingbird · sampled frames</figcaption></figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-pad" id="gallery">
+      <div class="container">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">Qualitative gallery</div>
+            <h2>Drag to compare the low-resolution source with BASA extrapolation</h2>
+          </div>
+          <p>
+            These examples are taken from the paper's 1K→2K appendix results. Drag each handle to reveal the source or BASA output.
+          </p>
+        </div>
+
+        <div class="compare-grid">
+          <article class="compare-card reveal">
+            <div class="compare-frame" data-compare>
+              <img class="compare-base" src="assets/images/neon-sedan-source.jpg" alt="Low-resolution source: black sedan on a neon-lit street." />
+              <div class="compare-after"><img src="assets/images/neon-sedan-basa.jpg" alt="BASA 2K extrapolation: black sedan on a neon-lit street." /></div>
+              <div class="compare-line" aria-hidden="true"><span></span></div>
+              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for neon sedan" />
+              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
+            </div>
+            <h3>Neon city sedan</h3>
+          </article>
+
+          <article class="compare-card reveal">
+            <div class="compare-frame" data-compare>
+              <img class="compare-base" src="assets/images/mechanized-unicorn-source.jpg" alt="Low-resolution source: rider on a mechanized unicorn in a forest." />
+              <div class="compare-after"><img src="assets/images/mechanized-unicorn-basa.jpg" alt="BASA 2K extrapolation: rider on a mechanized unicorn in a forest." /></div>
+              <div class="compare-line" aria-hidden="true"><span></span></div>
+              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for mechanized unicorn" />
+              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
+            </div>
+            <h3>Mechanized unicorn</h3>
+          </article>
+
+          <article class="compare-card reveal">
+            <div class="compare-frame" data-compare>
+              <img class="compare-base" src="assets/images/portrait-source.jpg" alt="Low-resolution source: close-up portrait of an elderly man." />
+              <div class="compare-after"><img src="assets/images/portrait-basa.jpg" alt="BASA 2K extrapolation: close-up portrait of an elderly man." /></div>
+              <div class="compare-line" aria-hidden="true"><span></span></div>
+              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for portrait" />
+              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
+            </div>
+            <h3>Portrait details</h3>
+          </article>
+
+          <article class="compare-card reveal">
+            <div class="compare-frame" data-compare>
+              <img class="compare-base" src="assets/images/ancient-library-source.jpg" alt="Low-resolution source: candlelit ancient library." />
+              <div class="compare-after"><img src="assets/images/ancient-library-basa.jpg" alt="BASA 2K extrapolation: candlelit ancient library." /></div>
+              <div class="compare-line" aria-hidden="true"><span></span></div>
+              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for library" />
+              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
+            </div>
+            <h3>Ancient library</h3>
+          </article>
+
+          <article class="compare-card reveal">
+            <div class="compare-frame" data-compare>
+              <img class="compare-base" src="assets/images/hummingbird-source.jpg" alt="Low-resolution source: hummingbird hovering near a flower." />
+              <div class="compare-after"><img src="assets/images/hummingbird-basa.jpg" alt="BASA 2K extrapolation: hummingbird hovering near a flower." /></div>
+              <div class="compare-line" aria-hidden="true"><span></span></div>
+              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for hummingbird" />
+              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
+            </div>
+            <h3>Hummingbird</h3>
+          </article>
+
+          <article class="compare-card reveal">
+            <div class="compare-frame" data-compare>
+              <img class="compare-base" src="assets/images/phoenix-source.jpg" alt="Low-resolution source: fiery phoenix in front of the sun." />
+              <div class="compare-after"><img src="assets/images/phoenix-basa.jpg" alt="BASA 2K extrapolation: fiery phoenix in front of the sun." /></div>
+              <div class="compare-line" aria-hidden="true"><span></span></div>
+              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for phoenix" />
+              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
+            </div>
+            <h3>Fiery phoenix</h3>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tint section-pad" id="citation">
+      <div class="container citation-wrap">
+        <div>
+          <div class="eyebrow">Citation</div>
+          <h2>Temporary citation for the anonymous submission</h2>
+          <p class="citation-note">
+            Replace the author list, venue status, arXiv link, and repository URL after deanonymization or public release.
+          </p>
+        </div>
+        <div class="bibtex-card">
+          <button class="copy-code" type="button" data-copy-bibtex>Copy</button>
+          <pre><code id="bibtex">@article{anonymous2026basa,
+  title   = {Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation},
+  author  = {Anonymous Authors},
+  journal = {Under review at ICLR 2027},
+  year    = {2026}
+}</code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div><strong>BASA</strong> · Backend-Agnostic Sparse Attention</div>
+      <div>Project page for the anonymous ICLR 2027 submission.</div>
+    </div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite" data-toast>Copied to clipboard</div>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
