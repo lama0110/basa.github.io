@@ -4,391 +4,712 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="BASA: Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation." />
-  <meta name="theme-color" content="#0b1020" />
+  <meta name="theme-color" content="#f7f8fb" />
+  <meta property="og:title" content="BASA — Backend-Agnostic Sparse Attention" />
+  <meta property="og:description" content="Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://lama0110.github.io/basa.github.io/assets/first_figure_3_compressed.png" />
+  <link rel="canonical" href="https://lama0110.github.io/basa.github.io/" />
   <title>BASA — Backend-Agnostic Sparse Attention</title>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+
+  <!--
+    This page is intentionally self-contained: CSS and JavaScript are inline.
+    Only research assets (images/videos/PDFs) are loaded from ./assets/.
+  -->
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-soft: #f6f8fb;
+      --ink: #121826;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #3157d5;
+      --accent-dark: #2443aa;
+      --accent-soft: #eef2ff;
+      --shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+      --radius: 20px;
+      --max: 1120px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    img, video { display: block; max-width: 100%; }
+
+    .container {
+      width: min(var(--max), calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(14px);
+    }
+    .nav-inner {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand {
+      text-decoration: none;
+      font-weight: 850;
+      letter-spacing: -0.03em;
+      font-size: 1.18rem;
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      font-size: 0.92rem;
+      color: #475569;
+    }
+    .nav-links a { text-decoration: none; }
+    .nav-links a:hover { color: var(--accent); }
+
+    .hero {
+      padding: 88px 0 56px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(49, 87, 213, 0.10), transparent 32%),
+        radial-gradient(circle at 85% 25%, rgba(80, 125, 255, 0.08), transparent 28%);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border: 1px solid #dbe4ff;
+      border-radius: 999px;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      font-size: 0.82rem;
+      font-weight: 750;
+      letter-spacing: 0.02em;
+    }
+    h1 {
+      max-width: 980px;
+      margin: 20px auto 16px;
+      font-size: clamp(2.35rem, 6vw, 4.7rem);
+      line-height: 1.03;
+      letter-spacing: -0.055em;
+    }
+    .subtitle {
+      max-width: 820px;
+      margin: 0 auto;
+      color: #475569;
+      font-size: clamp(1rem, 2.1vw, 1.22rem);
+    }
+    .authors {
+      margin: 22px 0 0;
+      font-size: 1.04rem;
+      font-weight: 650;
+      color: #24324a;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 28px 0 38px;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 11px;
+      border: 1px solid #d8dfeb;
+      background: #fff;
+      text-decoration: none;
+      font-size: 0.94rem;
+      font-weight: 750;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: #b9c5d8;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+    }
+    .button.primary {
+      color: white;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .button.primary:hover { background: var(--accent-dark); }
+    .button.disabled {
+      color: #8b96a8;
+      background: #f8fafc;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .teaser {
+      overflow: hidden;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      text-align: left;
+    }
+    .teaser img {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      background: #fff;
+    }
+    figcaption {
+      padding: 11px 6px 2px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    section { padding: 76px 0; }
+    section.soft { background: var(--bg-soft); }
+    .section-head {
+      max-width: 820px;
+      margin-bottom: 30px;
+    }
+    .section-head.center {
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+    h2 {
+      margin: 0 0 13px;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.04rem;
+      letter-spacing: -0.015em;
+    }
+    p { margin: 0 0 14px; }
+    .muted { color: var(--muted); }
+
+    .abstract-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 25px;
+      box-shadow: 0 10px 35px rgba(15, 23, 42, 0.045);
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+    .metric strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--accent-dark);
+      font-size: 1.65rem;
+      letter-spacing: -0.035em;
+    }
+    .metric span { color: var(--muted); font-size: 0.86rem; }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .method-card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fff;
+    }
+    .method-number {
+      display: inline-flex;
+      width: 29px;
+      height: 29px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      border-radius: 9px;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .method-card p { color: var(--muted); font-size: 0.93rem; }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #fff;
+    }
+    .results-table th,
+    .results-table td {
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+    .results-table th {
+      color: #475569;
+      background: #f8fafc;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .results-table tr:last-child td { border-bottom: 0; }
+    .results-table .highlight td { background: #f7f9ff; font-weight: 680; }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .media-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 10px 34px rgba(15, 23, 42, 0.045);
+    }
+    .media-card video,
+    .media-card img {
+      width: 100%;
+      background: #0f172a;
+    }
+    .media-card video {
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+    }
+    .media-meta { padding: 14px 16px 16px; }
+    .media-meta strong { display: block; overflow-wrap: anywhere; }
+    .media-meta span { color: var(--muted); font-size: 0.87rem; }
+    .status {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: #58667b;
+      background: #f1f5f9;
+      font-size: 0.88rem;
+    }
+
+    .asset-gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .asset-gallery .media-card img {
+      height: auto;
+      object-fit: contain;
+      background: #fff;
+    }
+
+    .citation {
+      position: relative;
+    }
+    pre {
+      margin: 0;
+      overflow-x: auto;
+      padding: 24px;
+      border-radius: 18px;
+      color: #d9e2f2;
+      background: #101827;
+      font: 0.88rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 9px;
+      padding: 7px 10px;
+      color: white;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+    }
+
+    footer {
+      padding: 32px 0 44px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .abstract-grid, .method-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
+      .hero { padding-top: 62px; }
+      .abstract-grid, .method-grid, .metric-grid, .media-grid, .asset-gallery { grid-template-columns: 1fr; }
+      section { padding: 58px 0; }
+      .results-table th, .results-table td { padding: 12px; font-size: 0.87rem; }
+    }
+  </style>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <header class="site-nav" id="top">
-    <div class="nav-inner">
-      <a class="brand" href="#top" aria-label="BASA home">
-        <span class="brand-mark">B</span><span>BASA</span>
-      </a>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="#top">BASA</a>
       <nav class="nav-links" aria-label="Primary navigation">
         <a href="#abstract">Abstract</a>
         <a href="#method">Method</a>
         <a href="#results">Results</a>
-        <a href="#gallery">Gallery</a>
+        <a href="#videos">Videos</a>
+        <a href="#assets">Assets</a>
         <a href="#citation">Citation</a>
       </nav>
     </div>
   </header>
 
-  <main id="main">
-    <section class="hero section-pad">
-      <div class="hero-glow hero-glow-a"></div>
-      <div class="hero-glow hero-glow-b"></div>
-      <div class="container hero-inner">
-        <div class="venue-pill">Under review at ICLR 2027</div>
+  <main id="top">
+    <section class="hero">
+      <div class="container">
+        <div class="eyebrow">High-Resolution Visual Generation</div>
         <h1>Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation</h1>
-        <p class="hero-kicker">
-          <strong>BASA</strong> keeps sparse attention regular enough for standard backends while restoring
-          cross-window and long-range communication for high-resolution image and video generation.
+        <p class="subtitle">
+          BASA combines regular local sparse attention with cross-window and global information propagation,
+          targeting practical acceleration on standard attention backends for high-resolution image and video generation.
         </p>
-        <p class="authors">Anonymous Authors</p>
+        <p class="authors">Liao Ma · Jiayi Song · Yunfeng Wu · Songhua Liu · Peilin Zhao</p>
 
-        <div class="hero-actions" aria-label="Project links">
-          <a class="btn btn-primary" href="assets/BASA_paper.pdf" target="_blank" rel="noopener">
-            <span class="btn-icon" aria-hidden="true">▤</span> Paper
-          </a>
-          <span class="btn btn-muted is-disabled" aria-disabled="true" title="Add the repository URL after release">
-            <span class="btn-icon" aria-hidden="true">⌘</span> Code <small>soon</small>
-          </span>
-          <span class="btn btn-muted is-disabled" aria-disabled="true" title="Add the arXiv URL after release">
-            <span class="btn-icon" aria-hidden="true">↗</span> arXiv <small>soon</small>
-          </span>
-          <button class="btn btn-ghost" type="button" data-copy-bibtex>
-            <span class="btn-icon" aria-hidden="true">{ }</span> BibTeX
-          </button>
+        <div class="buttons" aria-label="Project links">
+          <a class="button primary" href="https://github.com/lama0110/BASA" target="_blank" rel="noopener">GitHub</a>
+          <!-- Replace href="" with the public arXiv URL after release. -->
+          <a class="button disabled" href="" aria-disabled="true" tabindex="-1">arXiv</a>
+          <a class="button" href="#citation">BibTeX</a>
         </div>
 
-        <figure class="teaser-card reveal">
-          <img src="assets/images/teaser.jpg" alt="Ultra-resolution image and video results generated with BASA using FLUX.1-dev and Wan2.1-1.3B." />
+        <figure class="teaser">
+          <img src="./assets/first_figure_3_compressed.png"
+               alt="BASA qualitative high-resolution image and video generation results"
+               loading="eager" />
           <figcaption>
-            Ultra-resolution results with FLUX.1-dev and Wan2.1-1.3B. The labels in the montage indicate output resolution.
+            Representative ultra-resolution image and video results with BASA.
           </figcaption>
         </figure>
       </div>
     </section>
 
-    <section class="section section-pad" id="abstract">
+    <section id="abstract">
       <div class="container">
-        <div class="eyebrow">Overview</div>
-        <h2>High-resolution sparsity that translates into wall-clock speed</h2>
+        <div class="section-head">
+          <h2>Abstract</h2>
+          <p class="muted">
+            Diffusion Transformers become increasingly expensive as visual token sequences grow. BASA is designed
+            to keep sparse attention regular enough for efficient execution while restoring the communication that
+            conventional non-overlapping windows tend to lose.
+          </p>
+        </div>
+
         <div class="abstract-grid">
-          <div class="prose-card reveal">
+          <div class="card">
             <p>
-              Diffusion Transformers become increasingly expensive as visual token sequences grow. Regular
-              partitioned windows are efficient on existing attention backends, but isolated boundaries can create
-              visible grid-like artifacts. Fine-grained sliding windows restore local continuity, yet their irregular
-              access patterns can leave a large gap between theoretical FLOP reductions and measured speedups.
+              BASA combines <strong>shifted local-window sparse attention</strong>, <strong>K/V-pooled global memory</strong>,
+              and <strong>content-adaptive true-window routing</strong> for video. The sparse student is adapted from the
+              original dense DiT using a frozen dense teacher, while inference keeps only the sparse model.
             </p>
             <p>
-              BASA combines <strong>shifted local-window attention</strong>, <strong>K/V-pooled global memory</strong>,
-              and, for video, <strong>content-adaptive true-window routing</strong>. The sparse student is adapted from
-              the original dense model with a frozen teacher, while inference uses only the sparse model.
+              The key implementation goal is backend agnosticism: the sparse computation is expressed with regular
+              attention operations instead of relying on a bespoke sparse kernel, helping theoretical sparsity turn
+              into measured wall-clock acceleration.
             </p>
-            <div class="inline-callout">
-              <span class="callout-dot"></span>
-              The core sparse computation remains regular SDPA-style attention — no customized sparse kernel is required.
-            </div>
           </div>
 
-          <div class="metric-grid reveal" aria-label="Key paper results">
-            <article class="metric-card">
-              <div class="metric-value">4.52×</div>
-              <div class="metric-label">Wan attention speedup</div>
-              <div class="metric-note">w=(10,10), p=(4,4)</div>
-            </article>
-            <article class="metric-card">
-              <div class="metric-value">90.1%</div>
-              <div class="metric-label">FLUX realized / theoretical</div>
-              <div class="metric-note">w=32, p=4</div>
-            </article>
-            <article class="metric-card">
-              <div class="metric-value">8.871 ms</div>
-              <div class="metric-label">FLUX weighted MSA latency</div>
-              <div class="metric-note">attention per layer</div>
-            </article>
-            <article class="metric-card">
-              <div class="metric-value">90%</div>
-              <div class="metric-label">Video attention sparsity</div>
-              <div class="metric-note">fast BASA setting</div>
-            </article>
+          <div class="metric-grid" aria-label="Key reported results">
+            <div class="metric"><strong>4.52×</strong><span>Wan attention speedup</span></div>
+            <div class="metric"><strong>2.443×</strong><span>FLUX measured speedup</span></div>
+            <div class="metric"><strong>8.871 ms</strong><span>FLUX weighted-MSA latency</span></div>
+            <div class="metric"><strong>&gt;90%</strong><span>realized / theoretical FLUX speedup</span></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section section-tint section-pad" id="motivation">
+    <section class="soft" id="method">
       <div class="container">
-        <div class="section-heading">
-          <div>
-            <div class="eyebrow">Motivation</div>
-            <h2>Regular windows are fast. Irregular windows are expressive. BASA targets both.</h2>
-          </div>
-          <p>
-            The design goal is to preserve efficient, backend-friendly execution while enabling information to cross
-            partition boundaries and reach long-range context.
-          </p>
+        <div class="section-head center">
+          <h2>Method</h2>
+          <p class="muted">BASA replaces visual self-attention while leaving the surrounding DiT generation pipeline unchanged.</p>
         </div>
-        <figure class="paper-figure reveal">
-          <img src="assets/images/motivation.png" alt="Paper motivation figure comparing Swin, CLEAR, BASA, and the latency/FLOPs trade-off." />
-          <figcaption>Motivation figure from the paper: visual continuity and practical efficiency should improve together.</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="section section-pad" id="method">
-      <div class="container">
-        <div class="section-heading">
-          <div>
-            <div class="eyebrow">Method</div>
-            <h2>A drop-in sparse attention processor for image and video DiTs</h2>
-          </div>
-          <p>
-            BASA replaces only visual self-attention. The pre-trained Q/K/V projections, cross-attention, MLPs,
-            and the surrounding generation pipeline remain unchanged.
-          </p>
-        </div>
-
-        <figure class="paper-figure method-figure reveal">
-          <img src="assets/images/method_overview.png" alt="Overview of the BASA pipeline and four method components." />
-          <figcaption>Overview of BASA and its integration into a DiT backbone.</figcaption>
-        </figure>
 
         <div class="method-grid">
-          <article class="method-card reveal">
-            <span class="step-index">01</span>
-            <h3>Shifted Window Sparse Attention</h3>
-            <p>
-              Local windows stay non-overlapping and regular, while their spatial offsets vary across layers and
-              denoising steps. Tokens separated by one partition can meet under later partitions.
-            </p>
+          <article class="method-card">
+            <span class="method-number">01</span>
+            <h3>Shifted Local Windows</h3>
+            <p>Regular non-overlapping windows use interleaved spatial shifts so information can cross partition boundaries over layers and denoising steps.</p>
           </article>
-          <article class="method-card reveal">
-            <span class="step-index">02</span>
+          <article class="method-card">
+            <span class="method-number">02</span>
             <h3>K/V-Pooled Global Memory</h3>
-            <p>
-              Spatially pooled keys and values give every local query window a compressed view of the full latent.
-              For video, pooling is spatial only, retaining temporally resolved context.
-            </p>
+            <p>Spatially pooled keys and values provide compressed global context to each query window at low additional cost.</p>
           </article>
-          <article class="method-card reveal">
-            <span class="step-index">03</span>
+          <article class="method-card">
+            <span class="method-number">03</span>
             <h3>True-Window Routing</h3>
-            <p>
-              Video queries retrieve a small number of relevant uncompressed spatial windows. Routed regions keep
-              their full temporal extent, restoring selected long-range detail without dense attention.
-            </p>
+            <p>For video, content-adaptive routing retrieves a few relevant uncompressed windows while preserving their temporal extent.</p>
           </article>
-          <article class="method-card reveal">
-            <span class="step-index">04</span>
-            <h3>Dense-Teacher Sparse Adaptation</h3>
-            <p>
-              A frozen dense teacher supervises the sparse student through flow matching, prediction matching, and
-              intermediate attention-output alignment. The teacher is removed after adaptation.
-            </p>
+          <article class="method-card">
+            <span class="method-number">04</span>
+            <h3>Dense-Teacher Adaptation</h3>
+            <p>A frozen dense teacher supervises sparse adaptation; the teacher is removed for inference.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="section section-dark section-pad" id="results">
+    <section id="results">
       <div class="container">
-        <div class="section-heading on-dark">
-          <div>
-            <div class="eyebrow">Results</div>
-            <h2>Practical acceleration on FLUX and Wan</h2>
-          </div>
-          <p>
-            All reported timings below are attention-only measurements after warm-up under the paper's matched
-            evaluation setup.
-          </p>
+        <div class="section-head">
+          <h2>Results</h2>
+          <p class="muted">Representative attention-efficiency numbers reported for FLUX.1-dev and Wan2.1-T2V-1.3B.</p>
         </div>
 
-        <div class="result-tabs" role="tablist" aria-label="Results by modality">
-          <button class="result-tab is-active" role="tab" aria-selected="true" aria-controls="panel-image" data-result-tab="image">Image · FLUX.1-dev</button>
-          <button class="result-tab" role="tab" aria-selected="false" aria-controls="panel-video" data-result-tab="video">Video · Wan2.1-1.3B</button>
-        </div>
-
-        <div class="result-panel is-active" id="panel-image" role="tabpanel" data-result-panel="image">
-          <div class="result-summary-grid">
-            <div class="result-stat"><strong>2.443×</strong><span>measured speedup</span></div>
-            <div class="result-stat"><strong>97.60</strong><span>CLIP-I similarity</span></div>
-            <div class="result-stat"><strong>95.95</strong><span>DINO similarity</span></div>
-            <div class="result-stat"><strong>0.901</strong><span>realized / theoretical</span></div>
-          </div>
-
-          <div class="table-card">
-            <div class="table-head">
-              <h3>FLUX weighted-MSA efficiency</h3>
-              <span>1024² → 2048²</span>
-            </div>
-            <div class="table-scroll">
-              <table>
-                <thead><tr><th>Method</th><th>Backend</th><th>Latency ↓</th><th>Speedup ↑</th><th>Real./Theo. ↑</th></tr></thead>
-                <tbody>
-                  <tr><td>FLUX Dense</td><td>SDPA</td><td>21.666 ms</td><td>1.000×</td><td>1.000</td></tr>
-                  <tr><td>Swin w=32</td><td>SDPA</td><td>8.819 ms</td><td>2.455×</td><td>0.770</td></tr>
-                  <tr><td>CLEAR r=16</td><td>FlexAttn</td><td>13.106 ms</td><td>1.629×</td><td>0.504</td></tr>
-                  <tr><td>STA w=32</td><td>Triton</td><td>12.955 ms</td><td>1.648×</td><td>0.533</td></tr>
-                  <tr class="row-highlight"><td>BASA w=32, p=4</td><td>SDPA</td><td>8.871 ms</td><td>2.443×</td><td><strong>0.901</strong></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <figure class="paper-figure dark-figure reveal">
-            <img src="assets/images/image_comparison.png" alt="Qualitative comparison of FLUX, Swin, CLEAR, STA, BASA ablations, and BASA." />
-            <figcaption>Image extrapolation comparison from 1024×1024 to 2048×2048.</figcaption>
-          </figure>
-        </div>
-
-        <div class="result-panel" id="panel-video" role="tabpanel" data-result-panel="video" hidden>
-          <div class="result-summary-grid">
-            <div class="result-stat"><strong>4.52×</strong><span>attention speedup</span></div>
-            <div class="result-stat"><strong>112.84 ms</strong><span>attention latency</span></div>
-            <div class="result-stat"><strong>90.00%</strong><span>attention sparsity</span></div>
-            <div class="result-stat"><strong>99.17%</strong><span>motion smoothness</span></div>
-          </div>
-
-          <div class="table-card">
-            <div class="table-head">
-              <h3>Wan attention efficiency</h3>
-              <span>832×480 → 1664×960</span>
-            </div>
-            <div class="table-scroll">
-              <table>
-                <thead><tr><th>Method</th><th>Backend</th><th>Sparsity</th><th>Latency ↓</th><th>Speedup ↑</th></tr></thead>
-                <tbody>
-                  <tr><td>Wan Dense</td><td>SDPA</td><td>0.00%</td><td>509.66 ms</td><td>1.00×</td></tr>
-                  <tr><td>CLEAR w=16</td><td>Flex</td><td>89.46%</td><td>485.79 ms</td><td>1.05×</td></tr>
-                  <tr><td>Swin w=16</td><td>Flex</td><td>96.25%</td><td>396.60 ms</td><td>1.29×</td></tr>
-                  <tr><td>STA</td><td>Triton</td><td>81.25%</td><td>175.09 ms</td><td>2.85×</td></tr>
-                  <tr><td>BASA w=(15,26), p=(4,4)</td><td>SDPA</td><td>81.25%</td><td>126.07 ms</td><td>4.04×</td></tr>
-                  <tr class="row-highlight"><td>BASA w=(10,10), p=(4,4)</td><td>SDPA</td><td><strong>90.00%</strong></td><td><strong>112.84 ms</strong></td><td><strong>4.52×</strong></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="video-strip-grid">
-            <figure class="video-strip reveal"><img src="assets/images/german-shepherd-strip.jpg" alt="Four sampled frames of a German shepherd running across a field." /><figcaption>German shepherd · sampled frames</figcaption></figure>
-            <figure class="video-strip reveal"><img src="assets/images/storm-ship-strip.jpg" alt="Four sampled frames of a ship in a stormy sea." /><figcaption>Storm ship · sampled frames</figcaption></figure>
-            <figure class="video-strip reveal"><img src="assets/images/armored-wolf-strip.jpg" alt="Four sampled frames of an armored wolf in a forest." /><figcaption>Armored wolf · sampled frames</figcaption></figure>
-            <figure class="video-strip reveal"><img src="assets/images/cherry-blossom-strip.jpg" alt="Four sampled frames of cherry blossoms over a river." /><figcaption>Cherry blossoms · sampled frames</figcaption></figure>
-            <figure class="video-strip reveal"><img src="assets/images/hummingbird-video-strip.jpg" alt="Four sampled frames of a hummingbird near a flower." /><figcaption>Hummingbird · sampled frames</figcaption></figure>
-          </div>
+        <div class="table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Setting</th>
+                <th>Backbone</th>
+                <th>BASA configuration</th>
+                <th>Attention latency</th>
+                <th>Speedup</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight">
+                <td>1024×1024 → 2048×2048</td>
+                <td>FLUX.1-dev</td>
+                <td>w=32, p=4</td>
+                <td>8.871 ms</td>
+                <td>2.443×</td>
+              </tr>
+              <tr class="highlight">
+                <td>832×480 → 1664×960</td>
+                <td>Wan2.1-T2V-1.3B</td>
+                <td>w=(10,10), p=(4,4)</td>
+                <td>112.84 ms</td>
+                <td>4.52×</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
 
-    <section class="section section-pad" id="gallery">
+    <section class="soft" id="videos">
       <div class="container">
-        <div class="section-heading">
-          <div>
-            <div class="eyebrow">Qualitative gallery</div>
-            <h2>Drag to compare the low-resolution source with BASA extrapolation</h2>
-          </div>
-          <p>
-            These examples are taken from the paper's 1K→2K appendix results. Drag each handle to reveal the source or BASA output.
+        <div class="section-head">
+          <h2>Video Demos</h2>
+          <p class="muted">
+            The page automatically discovers MP4/WebM/MOV files stored directly in this repository's
+            <code>assets/</code> directory and embeds them below.
           </p>
         </div>
-
-        <div class="compare-grid">
-          <article class="compare-card reveal">
-            <div class="compare-frame" data-compare>
-              <img class="compare-base" src="assets/images/neon-sedan-source.jpg" alt="Low-resolution source: black sedan on a neon-lit street." />
-              <div class="compare-after"><img src="assets/images/neon-sedan-basa.jpg" alt="BASA 2K extrapolation: black sedan on a neon-lit street." /></div>
-              <div class="compare-line" aria-hidden="true"><span></span></div>
-              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for neon sedan" />
-              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
-            </div>
-            <h3>Neon city sedan</h3>
-          </article>
-
-          <article class="compare-card reveal">
-            <div class="compare-frame" data-compare>
-              <img class="compare-base" src="assets/images/mechanized-unicorn-source.jpg" alt="Low-resolution source: rider on a mechanized unicorn in a forest." />
-              <div class="compare-after"><img src="assets/images/mechanized-unicorn-basa.jpg" alt="BASA 2K extrapolation: rider on a mechanized unicorn in a forest." /></div>
-              <div class="compare-line" aria-hidden="true"><span></span></div>
-              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for mechanized unicorn" />
-              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
-            </div>
-            <h3>Mechanized unicorn</h3>
-          </article>
-
-          <article class="compare-card reveal">
-            <div class="compare-frame" data-compare>
-              <img class="compare-base" src="assets/images/portrait-source.jpg" alt="Low-resolution source: close-up portrait of an elderly man." />
-              <div class="compare-after"><img src="assets/images/portrait-basa.jpg" alt="BASA 2K extrapolation: close-up portrait of an elderly man." /></div>
-              <div class="compare-line" aria-hidden="true"><span></span></div>
-              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for portrait" />
-              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
-            </div>
-            <h3>Portrait details</h3>
-          </article>
-
-          <article class="compare-card reveal">
-            <div class="compare-frame" data-compare>
-              <img class="compare-base" src="assets/images/ancient-library-source.jpg" alt="Low-resolution source: candlelit ancient library." />
-              <div class="compare-after"><img src="assets/images/ancient-library-basa.jpg" alt="BASA 2K extrapolation: candlelit ancient library." /></div>
-              <div class="compare-line" aria-hidden="true"><span></span></div>
-              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for library" />
-              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
-            </div>
-            <h3>Ancient library</h3>
-          </article>
-
-          <article class="compare-card reveal">
-            <div class="compare-frame" data-compare>
-              <img class="compare-base" src="assets/images/hummingbird-source.jpg" alt="Low-resolution source: hummingbird hovering near a flower." />
-              <div class="compare-after"><img src="assets/images/hummingbird-basa.jpg" alt="BASA 2K extrapolation: hummingbird hovering near a flower." /></div>
-              <div class="compare-line" aria-hidden="true"><span></span></div>
-              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for hummingbird" />
-              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
-            </div>
-            <h3>Hummingbird</h3>
-          </article>
-
-          <article class="compare-card reveal">
-            <div class="compare-frame" data-compare>
-              <img class="compare-base" src="assets/images/phoenix-source.jpg" alt="Low-resolution source: fiery phoenix in front of the sun." />
-              <div class="compare-after"><img src="assets/images/phoenix-basa.jpg" alt="BASA 2K extrapolation: fiery phoenix in front of the sun." /></div>
-              <div class="compare-line" aria-hidden="true"><span></span></div>
-              <input class="compare-range" type="range" min="0" max="100" value="50" aria-label="Compare source and BASA result for phoenix" />
-              <span class="compare-label left">1K source</span><span class="compare-label right">BASA 2K</span>
-            </div>
-            <h3>Fiery phoenix</h3>
-          </article>
-        </div>
+        <div id="video-grid" class="media-grid" aria-live="polite"></div>
+        <div id="video-status" class="status">Loading video assets…</div>
       </div>
     </section>
 
-    <section class="section section-tint section-pad" id="citation">
-      <div class="container citation-wrap">
-        <div>
-          <div class="eyebrow">Citation</div>
-          <h2>Temporary citation for the anonymous submission</h2>
-          <p class="citation-note">
-            Replace the author list, venue status, arXiv link, and repository URL after deanonymization or public release.
+    <section id="assets">
+      <div class="container">
+        <div class="section-head">
+          <h2>Additional Visual Assets</h2>
+          <p class="muted">
+            Additional PNG/JPG/WebP/SVG files found in <code>assets/</code> are shown here automatically.
           </p>
         </div>
-        <div class="bibtex-card">
-          <button class="copy-code" type="button" data-copy-bibtex>Copy</button>
-          <pre><code id="bibtex">@article{anonymous2026basa,
-  title   = {Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation},
-  author  = {Anonymous Authors},
-  journal = {Under review at ICLR 2027},
-  year    = {2026}
+        <div id="image-grid" class="asset-gallery" aria-live="polite"></div>
+        <div id="image-status" class="status">Loading image assets…</div>
+      </div>
+    </section>
+
+    <section class="soft" id="citation">
+      <div class="container">
+        <div class="section-head">
+          <h2>Citation</h2>
+          <p class="muted">Update the entry with the arXiv identifier once the public preprint is available.</p>
+        </div>
+
+        <div class="citation">
+          <button class="copy" type="button" id="copy-bibtex">Copy</button>
+          <pre><code id="bibtex">@article{ma2026basa,
+  title  = {Backend-Agnostic Sparse Attention for Fast High-Resolution Visual Generation},
+  author = {Ma, Liao and Song, Jiayi and Wu, Yunfeng and Liu, Songhua and Zhao, Peilin},
+  year   = {2026}
 }</code></pre>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div><strong>BASA</strong> · Backend-Agnostic Sparse Attention</div>
-      <div>Project page for the anonymous ICLR 2027 submission.</div>
-    </div>
+  <footer>
+    <div class="container">BASA · Liao Ma, Jiayi Song, Yunfeng Wu, Songhua Liu, Peilin Zhao</div>
   </footer>
 
-  <div class="toast" role="status" aria-live="polite" data-toast>Copied to clipboard</div>
-  <script src="assets/js/main.js"></script>
+  <script>
+    // Public repository used only to discover exact filenames under /assets.
+    // The media themselves are loaded from this GitHub Pages site via ./assets/<filename>.
+    const OWNER = "lama0110";
+    const REPO = "basa.github.io";
+    const BRANCH = "main";
+    const API = `https://api.github.com/repos/${OWNER}/${REPO}/contents/assets?ref=${BRANCH}`;
+
+    const videoGrid = document.getElementById("video-grid");
+    const imageGrid = document.getElementById("image-grid");
+    const videoStatus = document.getElementById("video-status");
+    const imageStatus = document.getElementById("image-status");
+
+    const fallbackVideos = [
+      {
+        name: "Demo 1",
+        src: "https://github.com/user-attachments/assets/899a5714-9e44-4056-b08d-da7d080e239e"
+      },
+      {
+        name: "Demo 2",
+        src: "https://github.com/user-attachments/assets/2668b9b5-ed37-4364-81ff-5554155bd488"
+      }
+    ];
+
+    function localAssetUrl(name) {
+      return `./assets/${name.split("/").map(encodeURIComponent).join("/")}`;
+    }
+
+    function prettyName(name) {
+      return name
+        .replace(/\.[^.]+$/, "")
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function addVideo(name, src, note) {
+      const card = document.createElement("article");
+      card.className = "media-card";
+
+      const video = document.createElement("video");
+      video.controls = true;
+      video.preload = "metadata";
+      video.playsInline = true;
+      video.muted = true;
+      video.src = src;
+
+      const meta = document.createElement("div");
+      meta.className = "media-meta";
+      const title = document.createElement("strong");
+      title.textContent = prettyName(name);
+      const desc = document.createElement("span");
+      desc.textContent = note;
+      meta.append(title, desc);
+
+      card.append(video, meta);
+      videoGrid.append(card);
+    }
+
+    function addImage(name, src) {
+      const card = document.createElement("article");
+      card.className = "media-card";
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.src = src;
+      img.alt = prettyName(name);
+      const meta = document.createElement("div");
+      meta.className = "media-meta";
+      const title = document.createElement("strong");
+      title.textContent = prettyName(name);
+      const desc = document.createElement("span");
+      desc.textContent = name;
+      meta.append(title, desc);
+      card.append(img, meta);
+      imageGrid.append(card);
+    }
+
+    async function loadAssets() {
+      try {
+        const response = await fetch(API, {
+          headers: { "Accept": "application/vnd.github+json" }
+        });
+        if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+
+        const entries = await response.json();
+        const files = Array.isArray(entries) ? entries.filter(x => x.type === "file") : [];
+        const videos = files.filter(x => /\.(mp4|webm|mov)$/i.test(x.name));
+        const images = files.filter(x => /\.(png|jpe?g|webp|gif|svg)$/i.test(x.name));
+
+        if (videos.length) {
+          videos.forEach(file => addVideo(file.name, localAssetUrl(file.name), "Loaded from ./assets/"));
+          videoStatus.textContent = `${videos.length} video asset${videos.length === 1 ? "" : "s"} loaded from this repository.`;
+        } else {
+          fallbackVideos.forEach(v => addVideo(v.name, v.src, "GitHub-hosted demo fallback"));
+          videoStatus.textContent = "No local MP4/WebM/MOV file was discovered in assets/, so the two GitHub-hosted demo videos are shown instead.";
+        }
+
+        const extraImages = images.filter(file => {
+          const n = file.name.toLowerCase();
+          return n !== "first_figure_3_compressed.png" && !n.includes("favicon");
+        });
+
+        if (extraImages.length) {
+          extraImages.forEach(file => addImage(file.name, localAssetUrl(file.name)));
+          imageStatus.textContent = `${extraImages.length} additional image asset${extraImages.length === 1 ? "" : "s"} loaded from this repository.`;
+        } else {
+          imageStatus.textContent = "The teaser image above is currently the only additional renderable image discovered directly under assets/.";
+        }
+      } catch (error) {
+        fallbackVideos.forEach(v => addVideo(v.name, v.src, "GitHub-hosted demo fallback"));
+        videoStatus.textContent = "Automatic asset discovery was unavailable; showing the two GitHub-hosted demo videos instead.";
+        imageStatus.textContent = "Automatic asset discovery was unavailable. The main teaser still loads directly from ./assets/first_figure_3_compressed.png.";
+        console.warn(error);
+      }
+    }
+
+    document.getElementById("copy-bibtex").addEventListener("click", async () => {
+      const text = document.getElementById("bibtex").innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById("copy-bibtex");
+        const old = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => { btn.textContent = old; }, 1400);
+      } catch (_) {
+        // Clipboard can be unavailable on some local file:// previews.
+      }
+    });
+
+    loadAssets();
+  </script>
 </body>
 </html>
