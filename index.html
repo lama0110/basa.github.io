@@ -103,7 +103,7 @@
     h1 {
       max-width: 980px;
       margin: 20px auto 16px;
-      font-size: clamp(2.35rem, 6vw, 4.7rem);
+      font-size: clamp(2.15rem, 5.4vw, 4.2rem);
       line-height: 1.03;
       letter-spacing: -0.055em;
     }
@@ -118,6 +118,18 @@
       font-size: 1.04rem;
       font-weight: 650;
       color: #24324a;
+    }
+    .authors sup {
+      font-size: 0.68em;
+      vertical-align: super;
+      margin-left: 1px;
+    }
+    .affiliations {
+      max-width: 900px;
+      margin: 10px auto 0;
+      color: #64748b;
+      font-size: 0.91rem;
+      line-height: 1.65;
     }
     .buttons {
       display: flex;
@@ -263,6 +275,19 @@
       font-weight: 800;
     }
     .method-card p { color: var(--muted); font-size: 0.93rem; }
+    .method-figure {
+      margin: 0 0 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .method-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
 
     .results-table {
       width: 100%;
@@ -405,7 +430,14 @@
           BASA combines regular local sparse attention with cross-window and global information propagation,
           targeting practical acceleration on standard attention backends for high-resolution image and video generation.
         </p>
-        <p class="authors">Liao Ma · Jiayi Song · Yunfeng Wu · Songhua Liu · Peilin Zhao</p>
+        <p class="authors">
+          Liao Ma<sup>1</sup> · Jiayi Song<sup>2</sup> · Yunfeng Wu<sup>3</sup> · Songhua Liu<sup>2</sup> · Peilin Zhao<sup>2</sup>
+        </p>
+        <div class="affiliations">
+          <div><sup>1</sup> Fudan University, School of Data Science</div>
+          <div><sup>2</sup> Shanghai Jiaotong University, School of Artificial Intelligence</div>
+          <div><sup>3</sup> University of Hong Kong, School of Computing and Data Science</div>
+        </div>
 
         <div class="buttons" aria-label="Project links">
           <a class="button primary" href="https://github.com/lama0110/BASA" target="_blank" rel="noopener">GitHub</a>
@@ -466,6 +498,12 @@
           <h2>Method</h2>
           <p class="muted">BASA replaces visual self-attention while leaving the surrounding DiT generation pipeline unchanged.</p>
         </div>
+
+        <figure class="method-figure">
+          <img src="./assets/method.png"
+               alt="Overview of the BASA method"
+               loading="lazy" />
+        </figure>
 
         <div class="method-grid">
           <article class="method-card">
